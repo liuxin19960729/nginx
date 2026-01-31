@@ -95,9 +95,20 @@ struct ngx_table_elt_s {
     ngx_uint_t        hash;
     ngx_str_t         key;
     ngx_str_t         value;
-    u_char           *lowcase_key;
+    u_char           *lowcase_key;//指向全小写的字符串key
     ngx_table_elt_t  *next;
 };
+
+
+/**
+ * ngx_table_elt_s 
+ * 可以说是为了http header 制定的
+ * 例如
+ * key "Content-Length"
+ * value "1024"
+ * lowcase_key 忽略大小写使用 因为有点客户端发送来的是 "content-length"
+ */
+
 
 
 void *ngx_hash_find(ngx_hash_t *hash, ngx_uint_t key, u_char *name, size_t len);

@@ -15,41 +15,71 @@
 
 typedef void *            ngx_buf_tag_t;
 
+
+
 typedef struct ngx_buf_s  ngx_buf_t;
 
+/**
+ * ngx_buf_s
+ * Nginx 用于处理大数据关键数据结构 
+ * 
+ * 内存 pos->last 
+ * 文件 file_pos->file_last
+ * 
+ * 核心设计
+ * 零拷贝是想 
+ *      不会申请一个大buffer 将 内存 和 文件里面的内容复制到大buf 
+ */
+
 struct ngx_buf_s {
+
+    //1.[pos,last) 内存里面的数据 (note: 不包含last指向的数据)
     u_char          *pos;
     u_char          *last;
+
+    // 2 [file_pos,file_last] 文件 开始到结束的偏移量
     off_t            file_pos;
     off_t            file_last;
 
+    // 3.内存缓冲去物理边界(用于内存复用) 
     u_char          *start;         /* start of buffer */
     u_char          *end;           /* end of buffer */
+
+    // 4.标识 note:通常是模块的loc_conf 执指针 用于区分缓冲去是由那个模块分配的
     ngx_buf_tag_t    tag;
+    
+    // 5.文件对象(如果数据在文件中)
     ngx_file_t      *file;
+    // 6.影子缓冲区 通常用于多个buf 指向同一块内存 防止重复释放
     ngx_buf_t       *shadow;
 
-
-    /* the buf's content could be changed */
+    // 7.标志位
+    /* the buf's content could be changed  数据在临时内存区域(处理完可以修改复用)*/
     unsigned         temporary:1;
 
     /*
      * the buf's content is in a memory cache or in a read only memory
-     * and must not be changed
+     * and must not be changed 数据在只读区域不能修改
      */
     unsigned         memory:1;
 
-    /* the buf's content is mmap()ed and must not be changed */
+    /* the buf's content is mmap()ed and must not be changed  数据通过mmap 映射到内存*/
     unsigned         mmap:1;
-
+    // 缓冲区可回收（处理完后不释放，而是放入 free_bufs 链表复用）
     unsigned         recycled:1;
+    //数据在文件中（需配合 file_pos/file_last 使用）
     unsigned         in_file:1;
+    // 刷新标志。告诉过滤器链，即使数据不足也要立刻输出 例如 在长连接或流式响应中，强制把当前积压的数据发给客户端
     unsigned         flush:1;
+    // 同步标志。无实际数据，仅作为控制信号（类似 flush，但更轻量）
     unsigned         sync:1;
+    // 这是最后一块缓冲区（整个请求/响应结束）  例如 响应完全结束。HTTP Filter 看到它会计算 Content-Length 或发送 Chunked 结束块 (0\r\n\r\n) sync	同步占位	不含数据，仅为了刷新管道或传递控制信号
     unsigned         last_buf:1;
+    //  这是当前 chain 的最后一块（但不是整个请求结束）
     unsigned         last_in_chain:1;
-
+    //当前 buf 是 shadow 链的最后一个
     unsigned         last_shadow:1;
+    /// 1: 数据在临时文件中
     unsigned         temp_file:1;
 
     /* STUB */ int   num;
@@ -58,10 +88,16 @@ struct ngx_buf_s {
 
 struct ngx_chain_s {
     ngx_buf_t    *buf;
-    ngx_chain_t  *next;
+    ngx_chain_t  *next;//如果是最后一个 ngx_chain_t 则 next 必须是NULL
 };
 
+/**
+ * note:(Nginx框架要求)
+ * 最后一个 ngx_chain_s next 不为NULL 则这个请求一直不会结束
+ */
 
+
+ 
 typedef struct {
     ngx_int_t    num;
     size_t       size;
