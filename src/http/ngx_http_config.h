@@ -22,18 +22,38 @@ typedef struct {
 
 
 typedef struct {
+    // 解析配置文件前调用
     ngx_int_t   (*preconfiguration)(ngx_conf_t *cf);
+    // 完成配置文件解析后调用
     ngx_int_t   (*postconfiguration)(ngx_conf_t *cf);
-
+    //创建main几杯直属于存储main级别(直属于http{......})的全局配置项
     void       *(*create_main_conf)(ngx_conf_t *cf);
+    // 初始化main 级别的配置项
     char       *(*init_main_conf)(ngx_conf_t *cf, void *conf);
 
     void       *(*create_srv_conf)(ngx_conf_t *cf);
+    // 合并svr 和  main 的同名函数
     char       *(*merge_srv_conf)(ngx_conf_t *cf, void *prev, void *conf);
 
     void       *(*create_loc_conf)(ngx_conf_t *cf);
+    // 合并svr 和 loc 的同名函数
     char       *(*merge_loc_conf)(ngx_conf_t *cf, void *prev, void *conf);
 } ngx_http_module_t;
+
+
+/**
+ * 
+ * create_main_conf
+ * create_srv_conf
+ * create_loc_conf
+ * preconfiguration
+ * init_main_conf
+ * merge_srv_conf
+ * merge_loc_conf
+ * postconfiguration
+ * 
+ * 
+ */
 
 
 #define NGX_HTTP_MODULE           0x50545448   /* "HTTP" */

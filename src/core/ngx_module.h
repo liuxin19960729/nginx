@@ -225,31 +225,48 @@
 
 
 struct ngx_module_s {
-    ngx_uint_t            ctx_index;
-    ngx_uint_t            index;
+    // 1. 模块分类索引
+    ngx_uint_t            ctx_index;//在同一个类型模块中的索引
+    ngx_uint_t            index;// 所有模块全局索引
 
+    2. 备用字段 (Padding)
     char                 *name;
 
     ngx_uint_t            spare0;
     ngx_uint_t            spare1;
 
+    //  3. 模块版本与签名
     ngx_uint_t            version;
     const char           *signature;
-
+    /**
+     * 4
+     * 上下文
+     * type == NGX_HTTP_MODULE   ngx_http_module_t
+     * type == NGX_CORE_MODULE   ngx_core_module_t
+     * type == NGX_EVENT_MODULE  ngx_event_module_t
+     */
     void                 *ctx;
+    /**
+     * 5.模块支持的配置指令数组（解析 nginx.conf 用
+     */
     ngx_command_t        *commands;
+
+    /**
+     *  模块类型 
+     */
     ngx_uint_t            type;
+    
+    // 7. 生命周期回调 (Lifecycle Callbacks)
+    ngx_int_t           (*init_master)(ngx_log_t *log);// Master 进程初始化时调用 (极少用)
 
-    ngx_int_t           (*init_master)(ngx_log_t *log);
+    ngx_int_t           (*init_module)(ngx_cycle_t *cycle); // 配置文件解析完后调用
 
-    ngx_int_t           (*init_module)(ngx_cycle_t *cycle);
+    ngx_int_t           (*init_process)(ngx_cycle_t *cycle);// Worker 进程启动时调用 (常用)
+    ngx_int_t           (*init_thread)(ngx_cycle_t *cycle);// 线程初始化 (多线程模式用)
+    void                (*exit_thread)(ngx_cycle_t *cycle);// 线程退出
+    void                (*exit_process)(ngx_cycle_t *cycle);//Worker 进程退出时调用 (清理资源)
 
-    ngx_int_t           (*init_process)(ngx_cycle_t *cycle);
-    ngx_int_t           (*init_thread)(ngx_cycle_t *cycle);
-    void                (*exit_thread)(ngx_cycle_t *cycle);
-    void                (*exit_process)(ngx_cycle_t *cycle);
-
-    void                (*exit_master)(ngx_cycle_t *cycle);
+    void                (*exit_master)(ngx_cycle_t *cycle);// Master 进程退出时调用
 
     uintptr_t             spare_hook0;
     uintptr_t             spare_hook1;

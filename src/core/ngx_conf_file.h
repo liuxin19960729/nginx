@@ -75,11 +75,16 @@
 
 
 struct ngx_command_s {
+    //配置项目名称
     ngx_str_t             name;
+    // 配置项类型 例如 出现在server{} location{} 以及它可以携带的参数个数
     ngx_uint_t            type;
+    // 出现name中指定的配置项，将会调用set方法处理配置项参数
     char               *(*set)(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
+    // 在配置文件中的偏移量
     ngx_uint_t            conf;
     ngx_uint_t            offset;
+    // 配置项读取后的处理方法必须是 ngx_conf_post_t 结构的指针 
     void                 *post;
 };
 

@@ -173,6 +173,9 @@ ngx_stream_realip_set_addr(ngx_stream_session_t *s, ngx_addr_t *addr)
 }
 
 
+/**
+ * 处理配置项参数函数
+ */
 static char *
 ngx_stream_realip_from(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
